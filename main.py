@@ -9,6 +9,10 @@ if "yt_link_txt" not in st.session_state:
 if "side_bar_error" not in st.session_state:
     st.session_state.side_bar_error = ""
 
+if "chat_messages" not in st.session_state:
+    st.session_state.chat_messages = [
+        {"role": "assistant", "content": "Enter Youtube video link in left side bar..."}]
+
 
 def streamed_response_generator(response):
     for word in response.split():
@@ -48,14 +52,25 @@ st.markdown("##### 🗣️ Converse with 📼 Youtube videos")
 
 st.divider()
 
-with st.chat_message("assistant"):
-    response = st.write_stream(streamed_response_generator(
-        "Enter Youtube video link in left side bar..."))
+for message in st.session_state.chat_messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-if prompt := st.chat_input("What is up?"):
+
+if prompt := st.chat_input("Ask anything about Youtube video", key="txt_msg"):
     with st.chat_message("user"):
         st.markdown(prompt)
+    st.session_state.chat_messages.append({"role": "user", "content": prompt})
 
-# Verify Youtube video link on button click.
-# Error message.
-# Button hide when valid video found.
+    with st.chat_message("assistant"):
+        st.write_stream(streamed_response_generator(prompt))
+    st.session_state.chat_messages.append(
+        {"role": "assistant", "content": prompt})
+
+
+# Enable chat only when valid link is entered in box.
+# When youtube video entered.
+# Show waiting in chat window.
+# Download transcription and show its summary.
+# Summary should be first message.
+
