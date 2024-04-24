@@ -1,7 +1,10 @@
+from youtube_transcript_api import YouTubeTranscriptApi
 import streamlit as st
 import time
 import re
 
+if 'chat_input_disabled' not in st.session_state:
+    st.session_state.chat_input_disabled = True
 
 if "yt_link_txt" not in st.session_state:
     st.session_state.yt_link_txt = ""
@@ -25,14 +28,49 @@ def is_valid_youtube_url(url):
     return bool(re.match(pattern, url))
 
 
+def get_youtube_video_id(url):
+    match = re.search(r'[?&]v=([^&]+)', url)
+    return match.group(1) if match else None
+
+
+def valid_yt_link_entered(yt_link):
+    st.session_state.chat_input_disabled = False
+    st.session_state.yt_link_txt = yt_link
+    st.session_state.side_bar_error = ""
+
+    # * fetching summary and adding it.
+    result = fetch_yt_transcription(yt_link)
+    st.session_state.chat_messages = [{"role": "assistant", "content": result}]
+
+
+def invalid_yt_link_entered():
+    st.session_state.chat_input_disabled = True
+    st.session_state.yt_link_txt = ""
+    st.session_state.side_bar_error = "Youtube link is not valid."
+    st.session_state.chat_messages = [
+        {"role": "assistant", "content": "Enter Youtube video link in left side bar..."}]
+
+
 def enter_youtube_link():
     yt_link = st.session_state['yt_link']
     if is_valid_youtube_url(yt_link):
-        st.session_state.yt_link_txt = yt_link
-        st.session_state.side_bar_error = ""
+        valid_yt_link_entered(yt_link)
     else:
-        st.session_state.yt_link_txt = ""
-        st.session_state.side_bar_error = "Youtube link is not valid."
+        invalid_yt_link_entered()
+
+
+def fetch_yt_transcription(yt_link):
+    result = YouTubeTranscriptApi.get_transcript(
+        get_youtube_video_id(yt_link))
+    overall_txt = ""
+    for item in result:
+        overall_txt = overall_txt+" "+item['text']
+    return overall_txt
+
+
+def ask_yt_gpt(query):
+    time.sleep(15)
+    return f"The answer for {query} is Blah Blah Blah Blah Blah Blah"
 
 
 with st.sidebar:
@@ -57,20 +95,22 @@ for message in st.session_state.chat_messages:
         st.markdown(message["content"])
 
 
-if prompt := st.chat_input("Ask anything about Youtube video", key="txt_msg"):
+if prompt := st.chat_input("Please enter Youtube video link..." if st.session_state.chat_input_disabled else "Ask question...",
+                           key="txt_msg", disabled=st.session_state.chat_input_disabled):
     with st.chat_message("user"):
         st.markdown(prompt)
     st.session_state.chat_messages.append({"role": "user", "content": prompt})
 
+    # ! send prompt here to backend for processing.
+    response = ask_yt_gpt(prompt)
+
     with st.chat_message("assistant"):
-        st.write_stream(streamed_response_generator(prompt))
+        # ! after receiving the result store it in history and display it to user.
+        st.write_stream(streamed_response_generator(response))
     st.session_state.chat_messages.append(
-        {"role": "assistant", "content": prompt})
+        {"role": "assistant", "content": response})
 
 
-# Enable chat only when valid link is entered in box.
-# When youtube video entered.
-# Show waiting in chat window.
 # Download transcription and show its summary.
-# Summary should be first message.
-
+# Disable chat input.
+# Summarization
