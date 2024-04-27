@@ -1,7 +1,9 @@
-from youtube_transcript_api import YouTubeTranscriptApi
+import botocore.exceptions
+from llm import prompt_llm
 import streamlit as st
-import time
-import re
+import botocore
+from utils import is_valid_youtube_url, streamed_response_generator,fetch_yt_transcription,summarize,logger,bedrock_client
+
 
 if 'chat_input_disabled' not in st.session_state:
     st.session_state.chat_input_disabled = True
@@ -17,30 +19,15 @@ if "chat_messages" not in st.session_state:
         {"role": "assistant", "content": "Enter Youtube video link in left side bar..."}]
 
 
-def streamed_response_generator(response):
-    for word in response.split():
-        yield word + " "
-        time.sleep(0.05)
-
-
-def is_valid_youtube_url(url):
-    pattern = r'^(https?:\/\/)?(www\.)?(youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})'
-    return bool(re.match(pattern, url))
-
-
-def get_youtube_video_id(url):
-    match = re.search(r'[?&]v=([^&]+)', url)
-    return match.group(1) if match else None
-
-
 def valid_yt_link_entered(yt_link):
     st.session_state.chat_input_disabled = False
     st.session_state.yt_link_txt = yt_link
     st.session_state.side_bar_error = ""
 
     # * fetching summary and adding it.
-    result = fetch_yt_transcription(yt_link)
-    st.session_state.chat_messages = [{"role": "assistant", "content": result}]
+    summary = fetch_and_summarize_yt_transcription(yt_link)
+    st.session_state.chat_messages = [
+        {"role": "assistant", "content": summary}]
 
 
 def invalid_yt_link_entered():
@@ -58,19 +45,24 @@ def enter_youtube_link():
     else:
         invalid_yt_link_entered()
 
+# ! Cache this
+def fetch_and_summarize_yt_transcription(yt_link):
+    transcription = fetch_yt_transcription(yt_link)
+    summary = summarize(transcription)
+    return summary
 
-def fetch_yt_transcription(yt_link):
-    result = YouTubeTranscriptApi.get_transcript(
-        get_youtube_video_id(yt_link))
-    overall_txt = ""
-    for item in result:
-        overall_txt = overall_txt+" "+item['text']
-    return overall_txt
-
-
+# ! cache this
 def ask_yt_gpt(query):
-    time.sleep(15)
-    return f"The answer for {query} is Blah Blah Blah Blah Blah Blah"
+    try:
+        b_client = bedrock_client()
+        result = prompt_llm(b_client, query)
+        return result
+    except botocore.exceptions.ClientError as error:
+        logger.error("error in calling bedrock: ", str(error))
+        return "Pls try again later. Error in AWS service"
+    except Exception as e:
+        logger.error("error in calling bedrock: ", str(error))
+        return "Pls try again later."
 
 
 with st.sidebar:
@@ -109,8 +101,3 @@ if prompt := st.chat_input("Please enter Youtube video link..." if st.session_st
         st.write_stream(streamed_response_generator(response))
     st.session_state.chat_messages.append(
         {"role": "assistant", "content": response})
-
-
-# Download transcription and show its summary.
-# Disable chat input.
-# Summarization
