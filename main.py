@@ -2,7 +2,7 @@ import botocore.exceptions
 from llm import prompt_llm
 import streamlit as st
 import botocore
-from utils import is_valid_youtube_url, streamed_response_generator,fetch_yt_transcription,summarize,logger,bedrock_client
+from utils import is_valid_youtube_url, streamed_response_generator, fetch_yt_transcription, summarize, logger, bedrock_client, highlight_nouns, yt_transcription_error, MAX_DURATION_SECONDS
 
 
 if 'chat_input_disabled' not in st.session_state:
@@ -26,14 +26,15 @@ def valid_yt_link_entered(yt_link):
 
     # * fetching summary and adding it.
     summary = fetch_and_summarize_yt_transcription(yt_link)
+    summary = f"Here is summary of :red[Youtube] video: \n {summary}"
     st.session_state.chat_messages = [
         {"role": "assistant", "content": summary}]
 
 
-def invalid_yt_link_entered():
+def invalid_yt_link_entered(error_msg):
     st.session_state.chat_input_disabled = True
     st.session_state.yt_link_txt = ""
-    st.session_state.side_bar_error = "Youtube link is not valid."
+    st.session_state.side_bar_error = error_msg
     st.session_state.chat_messages = [
         {"role": "assistant", "content": "Enter Youtube video link in left side bar..."}]
 
@@ -41,17 +42,24 @@ def invalid_yt_link_entered():
 def enter_youtube_link():
     yt_link = st.session_state['yt_link']
     if is_valid_youtube_url(yt_link):
-        valid_yt_link_entered(yt_link)
+        if error_msg := yt_transcription_error(MAX_DURATION_SECONDS, yt_link):
+            invalid_yt_link_entered(error_msg)
+        else:
+            valid_yt_link_entered(yt_link)
     else:
-        invalid_yt_link_entered()
+        invalid_yt_link_entered("Youtube link is not valid.")
 
-# ! Cache this
+
+@st.cache_data
 def fetch_and_summarize_yt_transcription(yt_link):
     transcription = fetch_yt_transcription(yt_link)
     summary = summarize(transcription)
-    return summary
+    highlighted_nouns = highlight_nouns(summary)
+    return highlighted_nouns
 
 # ! cache this
+
+
 def ask_yt_gpt(query):
     try:
         b_client = bedrock_client()
@@ -76,6 +84,8 @@ with st.sidebar:
 
     if st.session_state.yt_link_txt:
         st.video(data=st.session_state.yt_link_txt)
+
+    st.write(":red[*] Videos longer than **30 minutes** are currently not supported.")    
 
 st.header("Youtube GPT 🤖")
 st.markdown("##### 🗣️ Converse with 📼 Youtube videos")

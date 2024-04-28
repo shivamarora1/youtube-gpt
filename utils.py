@@ -1,5 +1,7 @@
 import re
+import nltk
 import time
+from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api import YouTubeTranscriptApi
 import botocore
 import boto3
@@ -8,6 +10,8 @@ from llm import prompt_llm
 from streamlit.logger import get_logger
 
 logger = get_logger(__name__)
+
+MAX_DURATION_SECONDS = 60*30
 
 
 def bedrock_client():
@@ -54,8 +58,9 @@ def fetch_yt_transcription(yt_link):
 def summarize(transcription):
     try:
         b_client = bedrock_client()
-        query = f"""Summarize following Youtube video transcription: 
-        {transcription}"""
+        query = f"""Summarize given Youtube video transcription. Summarization should not be more than 250 characters. Summarize should be in points. Highlights important keywords using tag.
+Below is transcription: 
+{transcription}"""
         logger.info("prompt %s", query)
         result = prompt_llm(b_client, query)
         return result
@@ -65,3 +70,31 @@ def summarize(transcription):
     except Exception as e:
         logger.error("error in calling bedrock: ", str(error))
         return "Error in summarizing video. Pls try again"
+
+
+def highlight_nouns(txt):
+    spt = txt.split("\n")
+    i = 0
+    while i < len(spt):
+        sent = spt[i]
+        tagged_pos = nltk.pos_tag(nltk.word_tokenize(sent))
+        nouns = [word for word, tag in tagged_pos if tag ==
+                 "NNP" or tag == "NNPS"]
+        for noun in nouns:
+            sent = sent.replace(noun, f"**{noun}**", -1)
+        spt[i] = sent
+        i = i+1
+    return ('\n').join(spt)
+
+
+def yt_transcription_error(duration, yt_link):
+    """will check if there is some error while getting 
+    transcription for video duration should be in seconds"""
+    try:
+        result = YouTubeTranscriptApi.get_transcript(
+            get_youtube_video_id(yt_link))
+        total_duration = (result[len(result)-1]['start'] +
+                          result[len(result)-1]['duration'])
+        return f"Youtube video length should be less than {round(MAX_DURATION_SECONDS/60)} minutes" if total_duration > duration else ""
+    except Exception as e:
+        return str(e)
