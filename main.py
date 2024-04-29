@@ -3,6 +3,7 @@ from llm import prompt_llm
 import streamlit as st
 import botocore
 from utils import is_valid_youtube_url, streamed_response_generator, fetch_yt_transcription, summarize, logger, bedrock_client, highlight_nouns, yt_transcription_error, MAX_DURATION_SECONDS
+from vector_db import generate_embed_and_store,search_from_collection
 
 
 if 'chat_input_disabled' not in st.session_state:
@@ -20,15 +21,23 @@ if "chat_messages" not in st.session_state:
 
 
 def valid_yt_link_entered(yt_link):
-    st.session_state.chat_input_disabled = False
-    st.session_state.yt_link_txt = yt_link
-    st.session_state.side_bar_error = ""
-
+    msg = ""
     # * fetching summary and adding it.
-    summary = fetch_and_summarize_yt_transcription(yt_link)
-    summary = f"Here is summary of :red[Youtube] video: \n {summary}"
-    st.session_state.chat_messages = [
-        {"role": "assistant", "content": summary}]
+    try:
+        summary = fetch_and_summarize_yt_transcription(yt_link)
+        summary_h = f"Here is summary of :red[Youtube] video: \n {summary}"
+        msg = summary_h
+        generate_embed_and_store(summary)
+
+        st.session_state.chat_input_disabled = False
+        st.session_state.yt_link_txt = yt_link
+        st.session_state.side_bar_error = ""
+    except Exception as e:
+        logger.exception(e)
+        msg = "Apologies, an unforeseen hiccup 🌧️ has transpired. \n Please endeavor to reconnect ⚡ later at your convenience."
+    finally:
+        st.session_state.chat_messages = [
+            {"role": "assistant", "content": msg}]
 
 
 def invalid_yt_link_entered(error_msg):
@@ -57,13 +66,14 @@ def fetch_and_summarize_yt_transcription(yt_link):
     highlighted_nouns = highlight_nouns(summary)
     return highlighted_nouns
 
-# ! cache this
-
-
+@st.cache_data
 def ask_yt_gpt(query):
     try:
-        b_client = bedrock_client()
-        result = prompt_llm(b_client, query)
+        query_result = search_from_collection(query)
+        
+        # b_client = bedrock_client()
+        # result = prompt_llm(b_client, query)
+        result = query_result
         return result
     except botocore.exceptions.ClientError as error:
         logger.error("error in calling bedrock: ", str(error))
@@ -85,7 +95,8 @@ with st.sidebar:
     if st.session_state.yt_link_txt:
         st.video(data=st.session_state.yt_link_txt)
 
-    st.write(":red[*] Videos longer than **30 minutes** are currently not supported.")    
+    st.write(
+        ":red[*] Videos longer than **30 minutes** are currently not supported.")
 
 st.header("Youtube GPT 🤖")
 st.markdown("##### 🗣️ Converse with 📼 Youtube videos")
@@ -102,12 +113,9 @@ if prompt := st.chat_input("Please enter Youtube video link..." if st.session_st
     with st.chat_message("user"):
         st.markdown(prompt)
     st.session_state.chat_messages.append({"role": "user", "content": prompt})
-
-    # ! send prompt here to backend for processing.
     response = ask_yt_gpt(prompt)
 
     with st.chat_message("assistant"):
-        # ! after receiving the result store it in history and display it to user.
         st.write_stream(streamed_response_generator(response))
     st.session_state.chat_messages.append(
         {"role": "assistant", "content": response})

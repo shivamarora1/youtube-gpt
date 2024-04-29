@@ -22,3 +22,8 @@ Feature:
 - Mistral AI for summarization.
 - Proper Nouns are highlighted.
 - Supported upto 30 min video.
+
+RAG:
+- Breakdown and store them into in memory vector DB.
+- Fetch it from in memory vector DB.
+- Send retrieved context and question to LLM. 
