@@ -8,12 +8,12 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 logger = get_logger(__name__)
 
 
-@st.cache_resource
+@st.cache_resource(show_spinner=False)
 def get_qdrant_client():
     return QdrantClient(":memory:")
 
 
-@st.cache_resource
+@st.cache_resource(show_spinner=False)
 def get_sentence_transformer():
     return SentenceTransformer("all-MiniLM-L6-v2")
 
