@@ -5,3 +5,4 @@ botocore==1.34.92
 qdrant-client==1.9.0
 langchain-text-splitters==0.0.1
 nltk==3.8.1
+sentence-transformers==3.8.1
