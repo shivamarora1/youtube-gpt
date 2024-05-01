@@ -2,7 +2,7 @@ import botocore.exceptions
 from llm import prompt_llm
 import streamlit as st
 import botocore
-from utils import is_valid_youtube_url, streamed_response_generator, fetch_yt_transcription, summarize, logger, ask_from_context, highlight_nouns, yt_transcription_error, MAX_DURATION_SECONDS
+from utils import is_valid_youtube_url, streamed_response_generator, fetch_yt_transcription, summarize, logger, ask_from_context, highlight_nouns, yt_transcription_error, MAX_DURATION_SECONDS,download_nltk_punkt
 from vector_db import generate_embed_and_store,search_from_collection
 
 
@@ -19,6 +19,7 @@ if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = [
         {"role": "assistant", "content": "Enter Youtube video link in left side bar..."}]
 
+download_nltk_punkt()
 
 def valid_yt_link_entered(yt_link):
     msg = ""

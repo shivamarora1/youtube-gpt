@@ -8,12 +8,17 @@ import boto3
 import streamlit as st
 from llm import prompt_llm
 from streamlit.logger import get_logger
+import streamlit as st
 
 logger = get_logger(__name__)
 
 MAX_DURATION_SECONDS = 60*30
 
 
+@st.cache_data(show_spinner=False)
+def download_nltk_punkt():
+    nltk.download('punkt')
+ 
 def bedrock_client():
     client = boto3.client(service_name='bedrock-runtime', region_name=st.secrets["AWS_DEFAULT_REGION"],
                           aws_access_key_id=st.secrets["AWS_ACCESS_KEY_ID"], aws_secret_access_key=st.secrets["AWS_SECRET_ACCESS_KEY"])
