@@ -31,6 +31,7 @@ def insert_to_collection(embeddings, txts):
     """create collection and insert embeddings to collection"""
     try:
         client = get_qdrant_client()
+        client.delete_collection(collection_name=COLLECTION_NAME)
         client.create_collection(collection_name=COLLECTION_NAME, vectors_config=VectorParams(
             size=384, distance=Distance.COSINE))
         client.upload_collection(
@@ -39,7 +40,7 @@ def insert_to_collection(embeddings, txts):
             ids=[i for i in range(len(embeddings))],
             vectors=embeddings,
             parallel=10,
-            max_retries=3)
+            max_retries=3) 
     except Exception as e:
         logger.exception("error in inserting embedding to collection")
         raise
@@ -50,7 +51,7 @@ def search_from_collection(query):
     embeddings = generate_embeddings([query])
     query_result = client.search(collection_name=COLLECTION_NAME, search_params=SearchParams(
         exact=False), limit=3, query_vector=embeddings[0])
-    return '\n'.join([rslt.payload['value'] for rslt in query_result])
+    return '\n\n'.join([rslt.payload['values'] for rslt in query_result])
 
 
 def split_into_chunks(txt):

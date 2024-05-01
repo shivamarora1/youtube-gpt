@@ -61,7 +61,24 @@ def summarize(transcription):
         query = f"""Summarize given Youtube video transcription. Summarization should not be more than 250 characters. Summarize should be in points. Highlights important keywords using tag.
 Below is transcription: 
 {transcription}"""
-        logger.info("prompt %s", query)
+        result = prompt_llm(b_client, query)
+        return result
+    except botocore.exceptions.ClientError as error:
+        logger.error("error in calling bedrock: ", str(error))
+        return "Error in summarizing video. Pls try again"
+    except Exception as e:
+        logger.error("error in calling bedrock: ", str(error))
+        return "Error in summarizing video. Pls try again"
+
+
+def ask_from_context(context, question):
+    try:
+        b_client = bedrock_client()
+        query = f"""Considering below context:
+{context}
+
+Answer this question:
+{question}"""
         result = prompt_llm(b_client, query)
         return result
     except botocore.exceptions.ClientError as error:

@@ -20,7 +20,6 @@ def prompt_llm(bedrock_client, prompt):
     response_body = json.loads(response.get('body').read())
 
     outputs = response_body.get('outputs')
-    logger.info("output %s", json.dumps(outputs, indent=1))
     completions = [output["text"] for output in outputs]
 
     return ''.join(completions)

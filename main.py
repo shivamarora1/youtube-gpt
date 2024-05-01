@@ -2,7 +2,7 @@ import botocore.exceptions
 from llm import prompt_llm
 import streamlit as st
 import botocore
-from utils import is_valid_youtube_url, streamed_response_generator, fetch_yt_transcription, summarize, logger, bedrock_client, highlight_nouns, yt_transcription_error, MAX_DURATION_SECONDS
+from utils import is_valid_youtube_url, streamed_response_generator, fetch_yt_transcription, summarize, logger, ask_from_context, highlight_nouns, yt_transcription_error, MAX_DURATION_SECONDS
 from vector_db import generate_embed_and_store,search_from_collection
 
 
@@ -24,10 +24,10 @@ def valid_yt_link_entered(yt_link):
     msg = ""
     # * fetching summary and adding it.
     try:
-        summary = fetch_and_summarize_yt_transcription(yt_link)
+        summary, transcription = fetch_and_summarize_yt_transcription(yt_link)
         summary_h = f"Here is summary of :red[Youtube] video: \n {summary}"
         msg = summary_h
-        generate_embed_and_store(summary)
+        generate_embed_and_store(transcription)
 
         st.session_state.chat_input_disabled = False
         st.session_state.yt_link_txt = yt_link
@@ -58,22 +58,18 @@ def enter_youtube_link():
     else:
         invalid_yt_link_entered("Youtube link is not valid.")
 
-
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def fetch_and_summarize_yt_transcription(yt_link):
     transcription = fetch_yt_transcription(yt_link)
     summary = summarize(transcription)
     highlighted_nouns = highlight_nouns(summary)
-    return highlighted_nouns
+    return highlighted_nouns, transcription
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def ask_yt_gpt(query):
     try:
-        query_result = search_from_collection(query)
-        
-        # b_client = bedrock_client()
-        # result = prompt_llm(b_client, query)
-        result = query_result
+        context = search_from_collection(query)
+        result = ask_from_context(context, query)
         return result
     except botocore.exceptions.ClientError as error:
         logger.error("error in calling bedrock: ", str(error))
@@ -82,6 +78,7 @@ def ask_yt_gpt(query):
         logger.error("error in calling bedrock: ", str(error))
         return "Pls try again later."
 
+st.set_page_config(page_title="Youtube GPT", page_icon="./app/static/favicon.ico")
 
 with st.sidebar:
     st.text_input(label=":red[Youtube] video link", key="yt_link",
@@ -97,10 +94,13 @@ with st.sidebar:
 
     st.write(
         ":red[*] Videos longer than **30 minutes** are currently not supported.")
+    
+    st.markdown("\n\n\n")
+    st.markdown("[View code on Github.](https://github.com/shivamarora1/youtube-gpt)")
 
 st.header("Youtube GPT 🤖")
 st.markdown("##### 🗣️ Converse with 📼 Youtube videos")
-
+st.markdown("<b><span>Built with &nbsp;&nbsp;<img src = './app/static/combined.png'></span></b>",unsafe_allow_html=True)
 st.divider()
 
 for message in st.session_state.chat_messages:
@@ -113,9 +113,11 @@ if prompt := st.chat_input("Please enter Youtube video link..." if st.session_st
     with st.chat_message("user"):
         st.markdown(prompt)
     st.session_state.chat_messages.append({"role": "user", "content": prompt})
-    response = ask_yt_gpt(prompt)
+    
 
     with st.chat_message("assistant"):
+        with st.spinner("Thinking🌀..."):
+          response = ask_yt_gpt(prompt)
         st.write_stream(streamed_response_generator(response))
     st.session_state.chat_messages.append(
         {"role": "assistant", "content": response})
