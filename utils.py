@@ -18,6 +18,7 @@ MAX_DURATION_SECONDS = 60*30
 @st.cache_data(show_spinner=False)
 def download_nltk_punkt():
     nltk.download('punkt')
+    nltk.download('averaged_perceptron_tagger')
  
 def bedrock_client():
     client = boto3.client(service_name='bedrock-runtime', region_name=st.secrets["AWS_DEFAULT_REGION"],
