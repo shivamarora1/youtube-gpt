@@ -1,6 +1,7 @@
 # Youtube GPT: Converse with Youtube video
-This [Streamlit](https://streamlit.io/) application helps you in summarizing YouTube videos, making it easier to digest content efficiently. Additionally, it allows users to pose follow-up questions related to the video, and the application generates pertinent responses, enhancing engagement and understanding.
+![resized_speed_up](https://github.com/shivamarora1/youtube-gpt/assets/28146775/0d5fb99d-b3f6-4e2e-a8bb-d12e515ec71f)
 
+This [Streamlit](https://streamlit.io/) application helps you in summarizing YouTube videos, making it easier to digest content efficiently. Additionally, it allows users to pose follow-up questions related to the video, and the application generates pertinent responses, enhancing engagement and understanding.
 
 ### Steps to run on local:
 ---
@@ -34,9 +35,6 @@ streamlit run main.py
     2. Youtube video only in english language are only supported.
 
 ### Architecture diagram
-
-### Demo
-![resized_speed_up](https://github.com/shivamarora1/youtube-gpt/assets/28146775/0d5fb99d-b3f6-4e2e-a8bb-d12e515ec71f)
 
 
 
