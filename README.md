@@ -35,25 +35,3 @@ streamlit run main.py
     2. Youtube video only in english language are only supported.
 
 ### Architecture diagram
-
-
-
-ToDo:
-- Architecture blog
-- Make the summary according to the length of video. i.e if length is small then summary should be small but if length is big then summary should be big.
-- LIKE Button (So that we can measure its accuracy)
-- Video on LinkedIn
-
-In Github application:
-- Alive pipeline
-
-Before making app public:
-- Set alarm in AWS.
-
-Limitation:
-1. Chunking is not proper because we don't have information about the punctuation.
-2. Eliminate incomplete summaries.
-
-Depricate AI Youtube Summarizer in GPT Github.
-
-

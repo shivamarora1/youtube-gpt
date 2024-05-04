@@ -1,0 +1,26 @@
+name: Daily API Call
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 7 * * *'
+
+jobs:
+  call-api:
+    runs-on: ubuntu-latest
+
+    services:
+      selenium:
+        image: selenium/standalone-firefox
+        options: --shm-size=2gb
+        ports:
+          - 4444:4444
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+            pip install selenium  
+      - name: Open Website
+        run: |
+          python check_in/ping.py        
