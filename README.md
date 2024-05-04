@@ -35,3 +35,4 @@ streamlit run main.py
     2. Youtube video only in english language are only supported.
 
 ### Architecture diagram
+![arch](https://github.com/shivamarora1/youtube-gpt/assets/28146775/5bfd6cf4-34b9-4558-8a75-f4360ba5e16d)
