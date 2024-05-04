@@ -36,6 +36,7 @@ streamlit run main.py
 ### Architecture diagram
 
 ### Demo
+![resized_speed_up](https://github.com/shivamarora1/youtube-gpt/assets/28146775/0d5fb99d-b3f6-4e2e-a8bb-d12e515ec71f)
 
 
 
