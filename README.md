@@ -1,29 +1,60 @@
-# youtube-gpt
-Youtube GPT
+# Youtube GPT: Converse with Youtube video
+This [Streamlit](https://streamlit.io/) application helps you in summarizing YouTube videos, making it easier to digest content efficiently. Additionally, it allows users to pose follow-up questions related to the video, and the application generates pertinent responses, enhancing engagement and understanding.
 
 
-3lit run script.py
+### Steps to run on local:
+---
+1. Create and activate virtual environment
+```
+python3 -m venv .venv
+source .venv
+```
+2. Download all dependencies
+```
+pip install -r requirements.txt
+```
+3. Run application
+```
+streamlit run main.py 
+```
+
+### App overview
+---
+1. Enter Youtube video link in left side bar.
+2. Using Youtube Transcription api application will fetch transcriptions of Youtube video.
+3. Fetched transcriptions are sent to `Mistral-7B-instruction` model for summarization.
+4. Embeddings of transcriptions are generated using `all-MiniLM-L6-v2` model
+5. Generated embeddings are stored in `Qdrant` in memory vector database.
+6. When you follow question relevant similar Youtube video context is fetched from vector database and that context is sent to `Mistral-7B-instruction` model along with question.
+7. `Mistral-7B-instruction` uses fetched background context and gives answer of asked question. 
+<br><br>
+
+    #### Limitations
+    1. Youtube videos larger that 30 minutes length are not supported.
+    2. Youtube video only in english language are only supported.
+
+### Architecture diagram
+
+### Demo
 
 
-1. Side bar Youtube Video Path.
-2. Just bottom of that Video embed.
-3. First message should be info.
-4. After entering video. First there would be summarization and then Option would be enabled for chatting.
 
-Inspiration: https://www.youtube.com/watch?v=JLVsFIXtvKE
+ToDo:
+- Architecture blog
+- Make the summary according to the length of video. i.e if length is small then summary should be small but if length is big then summary should be big.
+- LIKE Button (So that we can measure its accuracy)
+- Video on LinkedIn
 
-Streaming looks cool.
+In Github application:
+- Alive pipeline
 
-* Breakdown large transcriptions into small one and send them in pieces. Considering context of LLM. But need to hard limit video may be 30 minutes.
-* See AWS Bill
-* Write a blog of setting up Mistral in AWS. Also write how we can use Cloudwatch to view its usage.
+Before making app public:
+- Set alarm in AWS.
 
-Feature:
-- Mistral AI for summarization.
-- Proper Nouns are highlighted.
-- Supported upto 30 min video.
+Limitation:
+1. Chunking is not proper because we don't have information about the punctuation.
+2. Eliminate incomplete summaries.
 
-RAG:
-- Breakdown and store them into in memory vector DB.
-- Fetch it from in memory vector DB.
-- Send retrieved context and question to LLM. 
+Depricate AI Youtube Summarizer in GPT Github.
+
+
