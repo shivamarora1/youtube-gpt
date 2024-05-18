@@ -76,7 +76,7 @@ def ask_yt_gpt(query):
         logger.error("error in calling bedrock: ", str(error))
         return "Pls try again later. Error in AWS service"
     except Exception as e:
-        logger.error("error in calling bedrock: ", str(error))
+        logger.error("error in calling bedrock: ", str(e))
         return "Pls try again later."
 
 st.set_page_config(page_title="Youtube GPT", page_icon="./app/static/favicon.ico")

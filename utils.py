@@ -2,7 +2,6 @@ import re
 import nltk
 import time
 from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api import YouTubeTranscriptApi
 import botocore
 import boto3
 import streamlit as st
@@ -67,13 +66,14 @@ def summarize(transcription):
         query = f"""Summarize given Youtube video transcription. Summarization should not be more than 250 characters. Summarize should be in points. Highlights important keywords using tag.
 Below is transcription: 
 {transcription}"""
+        logger.info(query)
         result = prompt_llm(b_client, query)
         return result
     except botocore.exceptions.ClientError as error:
         logger.error("error in calling bedrock: ", str(error))
         return "Error in summarizing video. Pls try again"
     except Exception as e:
-        logger.error("error in calling bedrock: ", str(error))
+        logger.error("error in calling bedrock: ", str(e))
         return "Error in summarizing video. Pls try again"
 
 
@@ -91,7 +91,7 @@ Answer this question:
         logger.error("error in calling bedrock: ", str(error))
         return "Error in summarizing video. Pls try again"
     except Exception as e:
-        logger.error("error in calling bedrock: ", str(error))
+        logger.error("error in calling bedrock: ", str(e))
         return "Error in summarizing video. Pls try again"
 
 
